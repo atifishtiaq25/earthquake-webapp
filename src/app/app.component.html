@@ -1,0 +1,137 @@
+
+<mat-sidenav-container class="search-mat-container" (backdropClick)="close()">
+    <mat-sidenav #sidenav class="side-nav-background" (keydown.escape)="close()">
+        <mat-tab-group>
+            <mat-tab label="Search By Place">
+                <mat-nav-list>
+                    <form class="main-app-form">
+                        <mat-form-field class="input-full-width">
+                            <input matInput
+                                name="place"
+                                placeholder="Place, City or Country"
+                                [matAutocomplete]="auto">
+                            <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete" (optionSelected)='onAutocompleteSelected($event.option.value)'>
+                                <mat-option *ngFor="let city of autoCompleteCities" [value]="city.name">
+                                    {{city.name}}
+                                </mat-option>
+                            </mat-autocomplete>
+                        </mat-form-field>
+                        <br>
+                        <label>OR</label>
+                        <br>
+                        <mat-form-field class="input-full-width">
+                            <input type="number" matInput placeholder="Latitude" name="lat" [(ngModel)]="latitude">
+                        </mat-form-field>
+                        <mat-form-field class="input-full-width">
+                            <input type="number" matInput placeholder="Longitute" name="longt" [(ngModel)]="longitude">
+                        </mat-form-field>
+                        <mat-form-field class="input-full-width">
+                            <input id="radius" class="form-control" type="number" minlength="50" maxlength="20001.4" 
+                                matInput placeholder="Radius(Km)" name="radius" [(ngModel)]="radiuskm">
+                        </mat-form-field>
+                        <button color="primary" mat-button (click)="onChosenLocation(); sidenav.toggle();">Find!</button>
+                    </form>  
+                </mat-nav-list>
+            </mat-tab>
+            <mat-tab label="Search By Magnitude"> 
+                <mat-nav-list>
+                    <form class="main-app-form">
+                        <mat-form-field class="input-full-width">
+                            <input id="magnitud" type="number" minlength="0" 
+                                matInput placeholder="Magnitude" name="magnitud" [(ngModel)]="magnitude">
+                        </mat-form-field>
+                        <button color="primary" mat-button (click)="searchByMagnitude(); sidenav.toggle();">Find!</button>
+                    </form>  
+                </mat-nav-list>
+            </mat-tab>
+        </mat-tab-group>
+    </mat-sidenav>
+    <mat-sidenav class="side-nav-background" *ngIf="todaysdataLoaded == true" #sidenavright opened (keydown.escape)="close()" position="end">
+        <mat-toolbar style="color: #bb2124; font-weight: bold; vertical-align: middle;">Today's Incidents</mat-toolbar>
+        <form class="right-side-nav">
+            <mat-card class="card-data" *ngFor="let data of todaysDataList.features; let i = index">
+                <span>{{data.properties.title}}</span>
+            </mat-card>    
+        </form>
+    </mat-sidenav>
+    <mat-sidenav-content style="z-index: 1;">
+        <div class="toolbar" role="banner">
+            <mat-icon class="material-icons" (click)="sidenav.toggle()" style="cursor: pointer">
+               menu
+            </mat-icon>
+
+            <span style="padding-left: 20px;">PIE (Portal for Information on Earthquakes)</span>
+
+            <mat-icon class="material-icons" (click)="sidenavright.toggle()" style="cursor: pointer;position: absolute;  right:0">
+                announcement
+            </mat-icon>
+        </div>
+        <agm-map [latitude]="latitude" [longitude]="longitude" [fitBounds]="true" (mapClick)="onLocationSelected($event)" >
+            <ng-container *ngIf="locationChosenbyPlace">
+                <ng-container *ngFor="let data of dataList.features; let i = index">
+                    <agm-marker *ngIf="data.properties.mag < 3" [iconUrl]="'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png'"
+                    [latitude]="data.geometry.coordinates.latitude"
+                    [longitude]="data.geometry.coordinates[0]"
+                    [agmFitBounds]="true"
+                    ></agm-marker>
+                    <agm-marker *ngIf="data.properties.mag > 2.9 && data.properties.mag < 5" [iconUrl]="'http://maps.google.com/mapfiles/ms/icons/green-dot.png'"
+                    [latitude]="data.geometry.coordinates[1]"
+                    [longitude]="data.geometry.coordinates[0]"
+                    [agmFitBounds]="true"
+                    ></agm-marker>
+                    <agm-marker *ngIf="data.properties.mag > 4.9 " [iconUrl]="'http://maps.google.com/mapfiles/ms/icons/red-dot.png'"
+                    [latitude]="data.geometry.coordinates[1]"
+                    [longitude]="data.geometry.coordinates[0]"
+                    [agmFitBounds]="true"
+                    ></agm-marker>
+                </ng-container>
+            </ng-container>  
+            <ng-container *ngIf="locationChosenbyMagnitude">
+                <ng-container *ngFor="let data of dataList.features; let i = index">
+                    <agm-marker *ngIf="data.properties.mag < 3" [iconUrl]="'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png'"
+                        [latitude]="data.geometry.coordinates[1]"
+                        [longitude]="data.geometry.coordinates[0]"
+                        [agmFitBounds]="true"
+                    ></agm-marker>
+                    <agm-marker *ngIf="data.properties.mag > 2.9 && data.properties.mag < 5" [iconUrl]="'http://maps.google.com/mapfiles/ms/icons/green-dot.png'"
+                        [latitude]="data.geometry.coordinates[1]"
+                        [longitude]="data.geometry.coordinates[0]"
+                        [agmFitBounds]="true"
+                    ></agm-marker>
+                    <agm-marker *ngIf="data.properties.mag > 4.9 " [iconUrl]="'http://maps.google.com/mapfiles/ms/icons/red-dot.png'"
+                        [latitude]="data.geometry.coordinates[1]"
+                        [longitude]="data.geometry.coordinates[0]"
+                        [agmFitBounds]="true"
+                    ></agm-marker>
+                </ng-container>
+            </ng-container>  
+            <agm-marker  *ngIf="locationChosenbyPlace == false && locationChosenbyMagnitude == false"
+                    [latitude]="latitude" [iconUrl]="'http://maps.google.com/mapfiles/ms/icons/zellow-dot.png'"
+                    [longitude]="longitude"
+                    [agmFitBounds]="true"
+            ></agm-marker>
+        </agm-map>
+
+        <div style="background: white; margin-right: 50px; width: 165px; border-radius: 10px; height: 150px; z-index: 2; position: absolute; bottom: 0px; right: 0px; opacity: 70%;">
+            <mat-list>
+                <mat-list-item> 
+                    <h4 style="color: yellow;" mat-line>Magnitude 0 - 2.9</h4>
+                </mat-list-item>
+                <mat-list-item> 
+                    <h4 style="color: green;" mat-line>Magnitude 3 - 4.9</h4>
+                </mat-list-item>
+                <mat-list-item> 
+                    <h4 style="color: red;" mat-line>Magnitude 5 +</h4>
+                </mat-list-item>
+            </mat-list>
+        </div>
+
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+
+
+ 
+  
+
+ 
+
